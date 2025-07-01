@@ -1,4 +1,5 @@
 import { Database } from './db'
+import { DatabaseAdapter, FeedDatabase } from './db/interfaces'
 import { DidResolver } from '@atproto/identity'
 
 /**
@@ -58,6 +59,8 @@ export type DatabaseConfig = {
 export type AppContext = {
   /** Database instance for data persistence */
   db: Database
+  /** Database adapter for multi-database support */
+  dbAdapter?: DatabaseAdapter & FeedDatabase
   /** DID resolver for identity resolution */
   didResolver: DidResolver
   /** Application configuration */

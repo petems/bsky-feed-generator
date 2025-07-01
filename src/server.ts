@@ -21,6 +21,7 @@ export class FeedGenerator {
   public dbAdapter?: DatabaseAdapter & FeedDatabase
   public firehose: FirehoseSubscription
   public cfg: Config
+  public ctx: AppContext
   private isShuttingDown: boolean = false
 
   constructor(
@@ -28,6 +29,7 @@ export class FeedGenerator {
     db: Database,
     firehose: FirehoseSubscription,
     cfg: Config,
+    ctx: AppContext,
     dbAdapter?: DatabaseAdapter & FeedDatabase,
   ) {
     this.app = app
@@ -35,9 +37,17 @@ export class FeedGenerator {
     this.dbAdapter = dbAdapter
     this.firehose = firehose
     this.cfg = cfg
+    this.ctx = ctx
 
     // Setup graceful shutdown handlers
     this.setupGracefulShutdown()
+  }
+
+  /**
+   * Updates the AppContext with the database adapter
+   */
+  updateContext() {
+    this.ctx.dbAdapter = this.dbAdapter
   }
 
   /**
@@ -71,6 +81,7 @@ export class FeedGenerator {
         db = createDb(cfg.sqliteLocation || ':memory:')
       }
 
+      // FirehoseSubscription will be updated with dbAdapter in start() method
       const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
 
       const didCache = new MemoryCache()
@@ -526,7 +537,7 @@ export class FeedGenerator {
       })
 
       console.log('✅ Feed Generator initialized successfully')
-      return new FeedGenerator(app, db, firehose, cfg, dbAdapter)
+      return new FeedGenerator(app, db, firehose, cfg, ctx, dbAdapter)
     } catch (error) {
       console.error('❌ Failed to create Feed Generator:', error)
       throw error
@@ -545,6 +556,10 @@ export class FeedGenerator {
       if (this.cfg.database && !this.dbAdapter) {
         console.log(`💾 Initializing ${this.cfg.database.type} database adapter...`)
         this.dbAdapter = await createDatabaseAdapter(this.cfg.database)
+        // Set the database adapter for the firehose subscription
+        this.firehose.setDatabaseAdapter(this.dbAdapter)
+        // Update the context with the database adapter
+        this.updateContext()
         console.log('✅ Database adapter initialized and migrated')
       } else {
         // Run legacy database migrations

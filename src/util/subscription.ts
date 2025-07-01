@@ -12,11 +12,16 @@ import {
   isCommit,
 } from '../lexicon/types/com/atproto/sync/subscribeRepos'
 import { Database } from '../db'
+import { DatabaseAdapter, FeedDatabase } from '../db/interfaces'
 
 export abstract class FirehoseSubscriptionBase {
   public sub: Subscription<RepoEvent>
 
-  constructor(public db: Database, public service: string) {
+  constructor(
+    public db: Database, 
+    public service: string,
+    protected dbAdapter?: DatabaseAdapter & FeedDatabase
+  ) {
     this.sub = new Subscription({
       service: service,
       method: ids.ComAtprotoSyncSubscribeRepos,
@@ -58,20 +63,33 @@ export abstract class FirehoseSubscriptionBase {
   }
 
   async updateCursor(cursor: number) {
-    await this.db
-      .updateTable('sub_state')
-      .set({ cursor })
-      .where('service', '=', this.service)
-      .execute()
+    if (this.dbAdapter) {
+      // Use new database adapter
+      await this.dbAdapter.subscriptionState.update(this.service, cursor)
+    } else {
+      // Legacy database operations
+      await this.db
+        .updateTable('sub_state')
+        .set({ cursor })
+        .where('service', '=', this.service)
+        .execute()
+    }
   }
 
   async getCursor(): Promise<{ cursor?: number }> {
-    const res = await this.db
-      .selectFrom('sub_state')
-      .selectAll()
-      .where('service', '=', this.service)
-      .executeTakeFirst()
-    return res ? { cursor: res.cursor } : {}
+    if (this.dbAdapter) {
+      // Use new database adapter
+      const state = await this.dbAdapter.subscriptionState.get(this.service)
+      return state ? { cursor: state.cursor } : {}
+    } else {
+      // Legacy database operations
+      const res = await this.db
+        .selectFrom('sub_state')
+        .selectAll()
+        .where('service', '=', this.service)
+        .executeTakeFirst()
+      return res ? { cursor: res.cursor } : {}
+    }
   }
 }
 

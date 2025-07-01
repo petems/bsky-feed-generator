@@ -16,24 +16,40 @@ export const shortname = 'whats-alf'
  */
 export const handler = async (ctx: AppContext, params: QueryParams) => {
   try {
-    let builder = ctx.db
-      .selectFrom('post')
-      .selectAll()
-      .orderBy('indexedAt', 'desc')
-      .orderBy('cid', 'desc')
-
-    // Apply cursor-based pagination if provided
-    if (params.cursor) {
-      const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
-      builder = builder.where('post.indexedAt', '<', timeStr)
-    }
+    let posts: any[] = []
     
-    // Get more posts than requested to account for filtering
-    const fetchLimit = Math.min(params.limit * 3, 300) // Fetch 3x to account for filtering
-    const res = await builder.limit(fetchLimit).execute()
+    if (ctx.dbAdapter) {
+      // Use new database adapter
+      const fetchLimit = Math.min(params.limit * 3, 300) // Fetch 3x to account for filtering
+      const cursor = params.cursor ? new Date(parseInt(params.cursor, 10)).toISOString() : undefined
+      
+      const result = await ctx.dbAdapter.posts.findMany({
+        limit: fetchLimit,
+        cursor: cursor
+      })
+      
+      posts = result
+    } else {
+      // Use legacy database
+      let builder = ctx.db
+        .selectFrom('post')
+        .selectAll()
+        .orderBy('indexedAt', 'desc')
+        .orderBy('cid', 'desc')
+
+      // Apply cursor-based pagination if provided
+      if (params.cursor) {
+        const timeStr = new Date(parseInt(params.cursor, 10)).toISOString()
+        builder = builder.where('post.indexedAt', '<', timeStr)
+      }
+      
+      // Get more posts than requested to account for filtering
+      const fetchLimit = Math.min(params.limit * 3, 300) // Fetch 3x to account for filtering
+      posts = await builder.limit(fetchLimit).execute()
+    }
 
     // Filter posts for ALF-related content
-    const alfPosts = res.filter((row) => {
+    const alfPosts = posts.filter((row) => {
       try {
         const record = JSON.parse(row.recordJson)
         return record.text && record.text.toLowerCase().includes('alf')
