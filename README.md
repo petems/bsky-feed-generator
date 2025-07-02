@@ -37,6 +37,12 @@ DATABASE_TYPE=sqlite
 SQLITE_LOCATION=./data/feedgen.db  # or :memory: for in-memory
 ```
 
+**Setup Requirements:**
+- For file-based SQLite databases, ensure the directory exists:
+  ```bash
+  mkdir -p ./data  # Create directory for database file
+  ```
+
 #### PostgreSQL
 ```bash
 DATABASE_TYPE=postgresql
@@ -102,6 +108,14 @@ cp .env.example .env
 ```
 
 4. Configure your database in the `.env` file (see Database Configuration above).
+
+5. **If using SQLite with file storage** (recommended for development):
+   ```bash
+   # Create the database directory
+   mkdir -p ./data
+   ```
+   
+   **Note**: The application expects database directories to exist. In production, ensure directories are created as part of your deployment process.
 
 ### Development
 

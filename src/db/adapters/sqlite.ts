@@ -68,6 +68,10 @@ export class SQLiteAdapter implements DatabaseAdapter, FeedDatabase {
       throw new Error('Database not connected')
     }
 
+    if (!this.sqliteDb) {
+      throw new Error('SQLite database not initialized')
+    }
+
     try {
       console.log('🔄 Running SQLite database migrations...')
       const migrator = new Migrator({ db: this.db, provider: migrationProvider })

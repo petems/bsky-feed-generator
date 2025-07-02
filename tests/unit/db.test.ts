@@ -1,5 +1,4 @@
 import { createDb, migrateToLatest } from '../../src/db'
-import { DatabaseSchema } from '../../src/db/schema'
 
 describe('Database', () => {
   describe('createDb', () => {
@@ -13,8 +12,15 @@ describe('Database', () => {
     })
 
     it('should handle database creation errors', () => {
-      // Test with invalid path that would cause SQLite to fail
-      expect(() => createDb('/invalid/path/that/does/not/exist/db.sqlite')).toThrow()
+      // Suppress console.error for this test since we expect it to fail
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      
+      try {
+        // Test with invalid path that would cause SQLite to fail
+        expect(() => createDb('/root/cannot/create/this/path/db.sqlite')).toThrow()
+      } finally {
+        consoleSpy.mockRestore()
+      }
     })
   })
 
@@ -47,28 +53,16 @@ describe('Database', () => {
     })
 
     it('should handle migration errors gracefully', async () => {
-      // Mock a database that will fail migrations
-      const mockDb = {
-        schema: {
-          createTable: jest.fn().mockReturnValue({
-            addColumn: jest.fn().mockReturnValue({
-              execute: jest.fn().mockRejectedValue(new Error('Migration failed')),
-            }),
-          }),
-        },
+      // Suppress console.error for this test since we expect it to fail
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      
+      try {
+        // Test that the function throws when given an invalid database instance
+        const invalidDb = { invalid: true } as any
+        await expect(migrateToLatest(invalidDb)).rejects.toThrow('Invalid database instance provided')
+      } finally {
+        consoleSpy.mockRestore()
       }
-
-      const mockMigrator = {
-        migrateToLatest: jest.fn().mockResolvedValue({
-          error: new Error('Migration failed'),
-          results: [],
-        }),
-      }
-
-      // This would require mocking the Migrator constructor, which is complex
-      // For now, we'll test that the function throws when migration fails
-      const invalidDb = { invalid: true } as any
-      await expect(migrateToLatest(invalidDb)).rejects.toThrow()
     })
   })
 

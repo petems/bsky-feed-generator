@@ -1,6 +1,7 @@
 import { DatabaseConfig } from '../../src/config'
 import { createDatabaseAdapter, validateDatabaseConfig, createDatabaseConfigFromEnv } from '../../src/db'
 import { PostRecord } from '../../src/db/interfaces'
+import { ensureTestDatabaseDirectory } from '../setup'
 
 describe('Database Adapters', () => {
   describe('SQLite Adapter', () => {
@@ -219,6 +220,9 @@ describe('Database Adapters', () => {
       process.env.DATABASE_TYPE = 'sqlite'
       process.env.SQLITE_LOCATION = './test.db'
 
+      // Ensure directory exists for test database
+      ensureTestDatabaseDirectory('./test.db')
+
       const config = createDatabaseConfigFromEnv()
       expect(config.type).toBe('sqlite')
       expect(config.sqlite?.location).toBe('./test.db')
@@ -267,11 +271,18 @@ describe('Database Adapters', () => {
       const invalidConfig: DatabaseConfig = {
         type: 'sqlite',
         sqlite: {
-          location: '/invalid/path/that/does/not/exist/db.sqlite',
+          location: '/root/cannot/create/this/path/db.sqlite',
         },
       }
 
-      await expect(createDatabaseAdapter(invalidConfig)).rejects.toThrow()
+      // Suppress console.error for this test since we expect it to fail
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      
+      try {
+        await expect(createDatabaseAdapter(invalidConfig)).rejects.toThrow()
+      } finally {
+        consoleSpy.mockRestore()
+      }
     })
 
     it('should handle unsupported database types', async () => {

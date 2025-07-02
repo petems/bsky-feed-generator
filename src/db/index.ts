@@ -48,6 +48,11 @@ export const createDb = (location: string): Database => {
  */
 export const migrateToLatest = async (db: Database): Promise<void> => {
   try {
+    // Validate that we have a proper Kysely database instance
+    if (!db || typeof db.selectFrom !== 'function') {
+      throw new Error('Invalid database instance provided')
+    }
+    
     console.log('🔄 Running database migrations...')
     const migrator = new Migrator({ db, provider: migrationProvider })
     const { error, results } = await migrator.migrateToLatest()

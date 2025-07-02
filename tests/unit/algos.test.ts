@@ -1,7 +1,7 @@
 import { getAlgorithmNames, getAlgorithm } from '../../src/algos'
 import * as whatsAlf from '../../src/algos/whats-alf'
 import { AppContext } from '../../src/config'
-import { createDb } from '../../src/db'
+// Database setup is handled by individual test mocks
 
 describe('Algorithms', () => {
   describe('getAlgorithmNames', () => {
@@ -219,12 +219,19 @@ describe('Algorithms', () => {
       const error = new Error('Database connection failed')
       mockDb.execute.mockRejectedValue(error)
 
-      await expect(
-        whatsAlf.handler(mockContext, { 
-          feed: 'at://did:example:alice/app.bsky.feed.generator/whats-alf',
-          limit: 10 
-        })
-      ).rejects.toThrow('Database connection failed')
+      // Suppress console.error for this test since we expect it to fail
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      
+      try {
+        await expect(
+          whatsAlf.handler(mockContext, { 
+            feed: 'at://did:example:alice/app.bsky.feed.generator/whats-alf',
+            limit: 10 
+          })
+        ).rejects.toThrow('Database connection failed')
+      } finally {
+        consoleSpy.mockRestore()
+      }
     })
   })
 })

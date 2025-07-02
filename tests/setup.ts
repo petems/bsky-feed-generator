@@ -2,13 +2,34 @@
  * Jest setup file for global test configuration
  */
 
+import { mkdirSync } from 'fs'
+import { dirname } from 'path'
+
 // Mock console methods to avoid noise in tests
+// Note: console.error and console.warn are kept for test debugging
+// Individual tests can suppress them when testing error conditions
 global.console = {
   ...console,
-  // Keep error and warn for debugging
   log: jest.fn(),
   debug: jest.fn(),
   info: jest.fn(),
+}
+
+/**
+ * Test utility to ensure directory exists for SQLite database files
+ * This is only used in tests - production environments should handle directory creation
+ */
+export const ensureTestDatabaseDirectory = (location: string): void => {
+  if (location !== ':memory:' && !location.startsWith(':') && !location.includes('/invalid/')) {
+    try {
+      mkdirSync(dirname(location), { recursive: true })
+    } catch (error) {
+      // Ignore if directory already exists
+      if ((error as any).code !== 'EEXIST') {
+        console.debug('Could not create test database directory:', (error as any).message)
+      }
+    }
+  }
 }
 
 // Set test timeout
