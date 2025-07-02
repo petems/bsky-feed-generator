@@ -7,8 +7,8 @@ on:
     branches: [ master, main, develop ]
 
 jobs:
-  test:
-    name: Test and Validate
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
     
     strategy:
@@ -35,15 +35,18 @@ jobs:
       run: yarn lint
       
     - name: Run unit tests
-      run: yarn test:coverage
+      run: yarn test:coverage:unit
+      env:
+        TEST_MODE: unit
       
-    - name: Upload coverage reports to Codecov
+    - name: Upload unit test coverage
       if: matrix.node-version == '20.x'
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage/lcov.info
+        flags: unit-tests
         fail_ci_if_error: false
-        
+      
     - name: Build project
       run: yarn build
       
@@ -51,6 +54,120 @@ jobs:
       run: |
         ls -la dist/
         node -e "console.log('Build successful')"
+
+  acceptance-tests:
+    name: Acceptance Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+          MONGO_INITDB_DATABASE: feedgen_test
+        options: >-
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/feedgen_test --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 40s
+      
+      postgresql:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: feedgen_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'yarn'
+        
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+      
+    - name: Wait for MongoDB
+      run: |
+        timeout 60 bash -c 'until docker exec $(docker ps -q --filter "ancestor=mongo:7.0") mongosh --eval "db.adminCommand(\"ping\")" > /dev/null 2>&1; do sleep 2; done'
+      
+    - name: Wait for PostgreSQL
+      run: |
+        timeout 60 bash -c 'until pg_isready -h localhost -p 5432 -U testuser; do sleep 2; done'
+      
+    - name: Setup test databases
+      run: |
+        # MongoDB setup
+        docker exec $(docker ps -q --filter "ancestor=mongo:7.0") mongosh --eval "
+          db = db.getSiblingDB('feedgen_test');
+          db.createUser({
+            user: 'testuser',
+            pwd: 'testpass',
+            roles: [{ role: 'readWrite', db: 'feedgen_test' }]
+          });
+          db.posts.createIndex({ uri: 1 }, { unique: true });
+          db.posts.createIndex({ authorDid: 1 });
+          db.posts.createIndex({ indexedAt: -1 });
+          db.subscription_states.createIndex({ service: 1 }, { unique: true });
+        "
+        
+        # PostgreSQL setup
+        PGPASSWORD=testpass psql -h localhost -U testuser -d feedgen_test -c "
+          CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+          CREATE TABLE IF NOT EXISTS post (
+            uri VARCHAR(255) PRIMARY KEY,
+            cid VARCHAR(255) NOT NULL,
+            \"indexedAt\" VARCHAR(255) NOT NULL,
+            \"replyParent\" VARCHAR(255),
+            \"replyRoot\" VARCHAR(255),
+            \"authorDid\" VARCHAR(255) NOT NULL DEFAULT '',
+            \"recordJson\" TEXT NOT NULL DEFAULT '{}'
+          );
+          CREATE TABLE IF NOT EXISTS sub_state (
+            service VARCHAR(255) PRIMARY KEY,
+            cursor INTEGER NOT NULL
+          );
+          CREATE INDEX IF NOT EXISTS post_indexed_at_idx ON post (\"indexedAt\");
+          CREATE INDEX IF NOT EXISTS post_author_did_idx ON post (\"authorDid\");
+          CREATE TABLE IF NOT EXISTS kysely_migration (
+            name VARCHAR(255) PRIMARY KEY,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        "
+      
+    - name: Run acceptance tests
+      run: yarn test:coverage:acceptance
+      env:
+        TEST_MODE: acceptance
+        MONGODB_URI: mongodb://root:testpass@localhost:27017
+        MONGODB_DATABASE: feedgen_test
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        POSTGRES_DATABASE: feedgen_test
+        POSTGRES_USERNAME: testuser
+        POSTGRES_PASSWORD: testpass
+      
+    - name: Upload acceptance test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: acceptance-tests
+        fail_ci_if_error: false
 
   security:
     name: Security Audit

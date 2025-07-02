@@ -1,71 +1,85 @@
-# ATProto Feed Generator - Cursor Interpretation
+# Bluesky Feed Generator
 
-> **Note**: This is a Cursor-based interpretation and enhancement of the original [Bluesky Feed Generator](https://github.com/bluesky-social/feed-generator) project. This version includes additional features such as comprehensive unit testing, GitHub Actions CI/CD pipeline, improved TypeScript configuration with strict linting rules, and **multi-database backend support**.
+ATProto Feed Generator with multi-database support and comprehensive testing.
 
-This project is a starter kit for creating ATProto Feed Generators with enhanced development practices. It's not feature complete, but provides a solid foundation with modern development tooling to build and deploy custom feeds for the Bluesky social network.
+## Features
 
-## 🚀 What's New in This Cursor Interpretation
+- 🔄 Multi-database support (SQLite, PostgreSQL, MongoDB)
+- 🧪 Comprehensive unit and acceptance testing
+- 🐳 Docker development environment
+- 🔧 TypeScript with full type safety
+- 📊 Code coverage reporting
+- 🚀 CI/CD pipeline with GitHub Actions
 
-- **Interactive API Documentation**: Beautiful index page showing all available endpoints with descriptions and parameters
-- **Improved Algorithm Architecture**: Moved filtering logic from subscription to algorithm layer for better flexibility and separation of concerns
-- **Multi-Database Backend Support**: SQLite, PostgreSQL, and MongoDB support with unified adapter interface
-- **Comprehensive Unit Testing**: Full Jest test suite with coverage reporting
-- **GitHub Actions CI/CD**: Automated TypeScript validation and test execution
-- **Enhanced TypeScript Configuration**: Strict type checking and modern ES features
-- **ESLint Integration**: Comprehensive linting rules for code quality
-- **Improved Developer Experience**: Better scripts, error handling, and documentation
+## Quick Start
 
-## 💾 Database Backend Support
+### Development Setup
 
-This feed generator supports multiple database backends through a unified adapter interface:
-
-### Supported Databases
-
-| Database | Status | Use Case |
-|----------|--------|----------|
-| **SQLite** | ✅ Production Ready | Development, small-scale deployments |
-| **PostgreSQL** | ✅ Production Ready | Production deployments, high performance |
-| **MongoDB** | ✅ Production Ready | Document-based storage, flexible schemas |
-
-### Database Configuration
-
-Configure your database backend using environment variables:
-
-#### SQLite (Default)
+1. **Clone and install dependencies:**
 ```bash
-DATABASE_TYPE=sqlite
-SQLITE_LOCATION=./data/feedgen.db  # or :memory: for in-memory
+git clone <repository-url>
+cd bsky-feed-generator
+yarn install
 ```
 
-#### PostgreSQL
+2. **Start development databases:**
+```bash
+# Start MongoDB and PostgreSQL
+yarn docker:up
+
+# Check service status
+yarn docker:logs
+```
+
+3. **Run tests:**
+```bash
+# Run all tests
+yarn test
+
+# Run only unit tests
+yarn test:unit
+
+# Run only acceptance tests (requires Docker services)
+yarn test:acceptance
+
+# Run with coverage
+yarn test:coverage
+```
+
+4. **Build and start:**
+```bash
+yarn build
+yarn start
+```
+
+## Database Configuration
+
+Configure your database in environment variables:
+
+### SQLite (Default)
+```bash
+DATABASE_TYPE=sqlite
+SQLITE_LOCATION=./feedgen.db
+```
+
+### PostgreSQL
 ```bash
 DATABASE_TYPE=postgresql
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=feedgen
-POSTGRES_USERNAME=postgres
+POSTGRES_USERNAME=your_user
 POSTGRES_PASSWORD=your_password
 POSTGRES_SSL=false
-POSTGRES_POOL_SIZE=10
 ```
 
-#### MongoDB
+### MongoDB
 ```bash
 DATABASE_TYPE=mongodb
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DATABASE=feedgen
 MONGODB_MAX_POOL_SIZE=10
-MONGODB_SERVER_SELECTION_TIMEOUT=5000
-MONGODB_SOCKET_TIMEOUT=45000
 ```
-
-### Database Features
-
-- **Automatic Migrations**: All databases support automatic schema migrations
-- **Connection Pooling**: PostgreSQL and MongoDB include connection pooling
-- **Health Checks**: Built-in health check endpoints for all database types
-- **Unified Interface**: Same API across all database backends
-- **Type Safety**: Full TypeScript support with proper type definitions
 
 ## Overview
 
@@ -127,7 +141,9 @@ To get started, you need to:
 - `yarn dev` - Start development server with hot reload
 - `yarn build` - Build the TypeScript project
 - `yarn start` - Start the production server
-- `yarn test` - Run unit tests (includes database adapter tests)
+- `yarn test` - Run all tests
+- `yarn test:unit` - Run only unit tests
+- `yarn test:acceptance` - Run only acceptance tests (requires Docker services)
 - `yarn test:watch` - Run tests in watch mode
 - `yarn test:coverage` - Generate test coverage report
 - `yarn lint` - Run ESLint
@@ -135,44 +151,87 @@ To get started, you need to:
 - `yarn type-check` - Run TypeScript type checking
 - `yarn publishFeed` - Publish your feed to the network
 - `yarn unpublishFeed` - Remove your feed from the network
+- `yarn docker:up` - Start Docker services
+- `yarn docker:down` - Stop Docker services
+- `yarn docker:clean` - Clean up Docker volumes
 
-## 🧪 Testing
+## Testing
 
-This project includes comprehensive unit tests for all database adapters:
+The project includes two types of tests:
+
+### Unit Tests
+- Fast, isolated tests using in-memory databases
+- Mock external dependencies
+- Located in `tests/unit/`
+- Run with: `yarn test:unit`
+
+### Acceptance Tests
+- Integration tests with real databases
+- Test actual database operations
+- Located in `tests/acceptance/`
+- Require Docker services to be running
+- Run with: `yarn test:acceptance`
+
+### Docker Development Environment
+
+The project includes a Docker Compose setup for development:
 
 ```bash
-# Run all tests including database adapter tests
-yarn test
+# Start all services
+yarn docker:up
 
-# Run tests in watch mode during development
-yarn test:watch
+# Stop all services
+yarn docker:down
 
-# Generate coverage report
-yarn test:coverage
+# Clean up volumes and networks
+yarn docker:clean
+
+# View logs
+yarn docker:logs
 ```
 
-The test suite includes:
-- Database adapter functionality tests
-- Configuration validation tests
-- Environment configuration tests
-- Error handling tests
-- Feed generation tests
+Services included:
+- **MongoDB** (port 27017): Document database
+- **PostgreSQL** (port 5432): Relational database
 
-Tests are located in the `tests/` directory and follow the naming convention `*.test.ts` or `*.spec.ts`.
 
-## 🔧 CI/CD Pipeline
+### Test Database Setup
 
-This project includes a GitHub Actions workflow that:
+The Docker setup automatically initializes test databases with:
+- Proper user accounts and permissions
+- Required indexes for performance
+- Schema migrations
+- Test data isolation
 
-- Runs on every push and pull request
-- Tests on Node.js 18.x and 20.x
-- Validates TypeScript compilation
-- Runs ESLint for code quality
-- Executes the full test suite including database tests
-- Generates test coverage reports
-- Performs security audits
+## CI/CD Pipeline
 
-The workflow file is located at `.github/workflows/ci.yml`.
+The GitHub Actions workflow includes:
+
+1. **Unit Tests**: Fast tests on multiple Node.js versions
+2. **Acceptance Tests**: Integration tests with real databases
+3. **Security Audit**: Dependency vulnerability scanning
+4. **Code Coverage**: Automated coverage reporting
+5. **Build Verification**: Ensures successful compilation
+
+## Project Structure
+
+```
+├── src/
+│   ├── algos/           # Feed algorithms
+│   ├── db/              # Database layer
+│   │   ├── adapters/    # Database-specific implementations
+│   │   └── interfaces/  # Common interfaces
+│   ├── lexicon/         # ATProto lexicons
+│   ├── methods/         # API method handlers
+│   └── ...
+├── tests/
+│   ├── unit/            # Unit tests
+│   ├── acceptance/      # Acceptance tests
+│   └── setup.ts         # Test configuration
+├── scripts/             # Database initialization scripts
+├── docker-compose.yml   # Development environment
+└── jest.config.js       # Test configuration
+```
 
 ## 📦 Deployment
 
@@ -385,5 +444,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ATProto Documentation](https://atproto.com/)
 - [Bluesky Developer Documentation](https://docs.bsky.app/)
 - [Feed Generator Examples](https://github.com/bluesky-social/feed-generator/tree/main/src/algos)
-- [Database Setup Guides](./docs/database-setup.md)
-- [Performance Tuning](./docs/performance.md)
+## Contributing
+
+1. Write tests for new features
+2. Ensure all tests pass: `yarn test`
+3. Run linting: `yarn lint:fix`
+4. Build successfully: `yarn build`
+
+## License
+
+MIT License - see LICENSE file for details.

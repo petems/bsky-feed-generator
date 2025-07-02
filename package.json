@@ -11,13 +11,22 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "test:acceptance": "jest --selectProjects acceptance",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:unit": "jest --selectProjects unit --coverage",
+    "test:coverage:acceptance": "jest --selectProjects acceptance --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
     "publishFeed": "ts-node scripts/publishFeedGen.ts",
-    "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts"
+    "unpublishFeed": "ts-node scripts/unpublishFeedGen.ts",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v --remove-orphans",
+    "test:all": "./scripts/test-all.sh"
   },
   "dependencies": {
     "@atproto/api": "^0.13.28",
@@ -53,25 +62,5 @@
   },
   "engines": {
     "node": ">= 18"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.ts"
-    ],
-    "roots": [
-      "<rootDir>/src",
-      "<rootDir>/tests"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.ts",
-      "**/?(*.)+(spec|test).ts"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.ts",
-      "!src/**/*.d.ts",
-      "!src/index.ts"
-    ]
   }
 }

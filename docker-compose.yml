@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # MongoDB for testing
+  mongodb:
+    image: mongo:7.0
+    container_name: feedgen-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: feedgen_test
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - feedgen-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # PostgreSQL for testing
+  postgresql:
+    image: postgres:16
+    container_name: feedgen-postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: feedgen_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql:ro
+    networks:
+      - feedgen-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d feedgen_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mongodb_data:
+    driver: local
+  postgresql_data:
+    driver: local
+
+networks:
+  feedgen-network:
+    driver: bridge 
