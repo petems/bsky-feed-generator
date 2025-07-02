@@ -61,7 +61,7 @@ cursor-bluesky-feed-generator/
 ### GitHub Actions Workflow
 - **Multi-Node Testing**: Node.js 18.x and 20.x
 - **Quality Checks**: TypeScript compilation, ESLint, unit tests
-- **Security**: npm audit for dependency vulnerabilities
+- **Security**: yarn audit for dependency vulnerabilities
 - **Build Verification**: Complete build process validation
 
 ## 🛠️ Development Tools

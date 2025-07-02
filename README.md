@@ -80,7 +80,7 @@ A Feed Generator service can host one or more algorithms. The service itself is 
 ### Prerequisites
 
 - Node.js >= 18
-- npm package manager
+- yarn package manager
 - Database server (optional - SQLite works out of the box)
 
 ### Installation
@@ -93,7 +93,7 @@ cd cursor-bluesky-feed-generator
 
 2. Install dependencies:
 ```bash
-npm install
+yarn install
 ```
 
 3. Copy the environment configuration:
@@ -124,17 +124,17 @@ To get started, you need to:
 
 ### Available Scripts
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build the TypeScript project
-- `npm start` - Start the production server
-- `npm test` - Run unit tests (includes database adapter tests)
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Generate test coverage report
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run type-check` - Run TypeScript type checking
-- `npm run publishFeed` - Publish your feed to the network
-- `npm run unpublishFeed` - Remove your feed from the network
+- `yarn dev` - Start development server with hot reload
+- `yarn build` - Build the TypeScript project
+- `yarn start` - Start the production server
+- `yarn test` - Run unit tests (includes database adapter tests)
+- `yarn test:watch` - Run tests in watch mode
+- `yarn test:coverage` - Generate test coverage report
+- `yarn lint` - Run ESLint
+- `yarn lint:fix` - Fix ESLint issues automatically
+- `yarn type-check` - Run TypeScript type checking
+- `yarn publishFeed` - Publish your feed to the network
+- `yarn unpublishFeed` - Remove your feed from the network
 
 ## 🧪 Testing
 
@@ -142,13 +142,13 @@ This project includes comprehensive unit tests for all database adapters:
 
 ```bash
 # Run all tests including database adapter tests
-npm test
+yarn test
 
 # Run tests in watch mode during development
-npm run test:watch
+yarn test:watch
 
 # Generate coverage report
-npm run test:coverage
+yarn test:coverage
 ```
 
 The test suite includes:
@@ -180,7 +180,7 @@ The workflow file is located at `.github/workflows/ci.yml`.
 
 Run the development server:
 ```bash
-npm run dev
+yarn dev
 ```
 
 The server will start on port 3000 (or your configured port). You can access:
@@ -194,7 +194,7 @@ The server will start on port 3000 (or your configured port). You can access:
 
 1. **Configure your database**: Set up PostgreSQL or MongoDB for production use
 2. **Set environment variables**: Configure all required environment variables
-3. **Build the project**: `npm run build`
+3. **Build the project**: `yarn build`
 4. **Deploy to your hosting platform**: Heroku, Railway, Fly.io, AWS, etc.
 
 #### Example Docker Deployment
@@ -202,12 +202,12 @@ The server will start on port 3000 (or your configured port). You can access:
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package*.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production
 COPY dist ./dist
 COPY src/lexicon ./src/lexicon
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
 ```
 
 ### Database Setup
@@ -236,7 +236,7 @@ db.createUser({
 Once deployed, publish your feed to the network:
 
 ```bash
-npm run publishFeed
+yarn publishFeed
 ```
 
 You'll be prompted for your Bluesky credentials to publish the feed record.
@@ -352,8 +352,8 @@ To migrate between database backends:
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Make your changes and add tests
-4. Run the test suite: `npm test`
-5. Run linting: `npm run lint`
+4. Run the test suite: `yarn test`
+5. Run linting: `yarn lint`
 6. Commit your changes: `git commit -m 'Add some feature'`
 7. Push to the branch: `git push origin feature/your-feature`
 8. Submit a pull request

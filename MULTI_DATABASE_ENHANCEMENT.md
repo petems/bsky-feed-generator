@@ -167,13 +167,13 @@ await adapter.subscriptionState.update('firehose', 12345)
 
 ```bash
 # Run all tests including database adapters
-npm test
+yarn test
 
 # Run specific database adapter tests
-npm test -- --testNamePattern="Database Adapters"
+yarn test --testNamePattern="Database Adapters"
 
 # Run with coverage
-npm run test:coverage
+yarn test:coverage
 ```
 
 ## 🚀 Performance Considerations
@@ -210,7 +210,7 @@ npm run test:coverage
 
 3. **Test the migration**:
    ```bash
-   npm run dev
+   yarn dev
    ```
 
 ### To PostgreSQL
@@ -234,7 +234,7 @@ npm run test:coverage
 
 3. **Start application** (migrations run automatically):
    ```bash
-   npm start
+   yarn start
    ```
 
 ### To MongoDB
@@ -259,7 +259,7 @@ npm run test:coverage
 
 3. **Start application**:
    ```bash
-   npm start
+   yarn start
    ```
 
 ## 🛠️ Development
